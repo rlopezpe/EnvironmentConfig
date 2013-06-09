@@ -1,0 +1,31 @@
+body{
+	background-color:#4F4F4F;
+	color:#CFCFCF;
+	font-weight:normal;
+	font-family: Arial, "courier new", "Lucida Console", sans-serif;
+	padding:10px;
+}
+
+div.h2,div.h3{
+	background-color: #1F1F1F;
+	
+	padding:10px;
+	margin-bottom:10px;
+	
+}
+div.h2{ font-size:20px; }
+div.h3{ font-size:16px; }
+	
+table{
+	color:black;
+}
+div{margin-bottom:6px;}
+
+.code{
+	font-size: 14px;
+	font-family:  "Lucida Console" !important;
+	color: #EFEFEF;
+}
+.b{font-weight:bold;}
+.i{ font-style:italic;}
+.highlight, .code{  background-color:#4F4F4F;}

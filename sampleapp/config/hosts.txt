@@ -1,0 +1,2 @@
+	#Add this line to your hosts file to run this example
+127.0.0.1       environmentConfig.local ec.local environmentConfig.dev environmentConfig.staging ec.production
