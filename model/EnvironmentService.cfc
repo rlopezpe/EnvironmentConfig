@@ -261,6 +261,40 @@ See the License for the specific language governing permissions and limitations 
     </cffunction>
     
 
+    <cfscript>
+	public struct function initEnvironmentConfig(required String ecConfigFilePath, String configVarName='oConfig', String ColdSpringDefinitionFile="/config/coldspring.xml.cfm", String factoryLabel="factory"){
+		try{
+			var ecProperties	= configureEnvironment( arguments.ecConfigFilePath );
+			var ecConfig 		= {};
+
+			if( structKeyExists( ecProperties, 'ec' ) )
+				ecConfig = ecProperties.ec;
+			else if(structKeyExists( ecProperties.stProperties, 'ec' ) )
+				ecConfig = ecProperties.stProperties.ec;
+
+			if(structCount(ecConfig)){
+				if(ecConfig.bCreateColdSpringFile){
+					Application[arguments.factoryLabel] = createObject( "component","coldspring.beans.DefaultXmlBeanFactory" ).init(structNew(), ecProperties.stFlattened);
+					Application[arguments.factoryLabel].loadBeansFromXmlFile( "#expandPath( arguments.ColdSpringDefinitionFile )#",true );
+				}else 
+				if(ecConfig.bCreateBeanFile)
+					if( not ecConfig.bUseFlattenedStruct)
+						Application[arguments.configVarName] = createObject( 'component', ecConfig.sConfigBeanObjPath ).init(argumentCollection = ecProperties.stProperties);
+					else
+						Application[arguments.configVarName] = createObject( 'component', ecConfig.sConfigBeanObjPath ).init(argumentCollection = ecProperties.stFlattened);
+				else if( not ecConfig.bUseFlattenedStruct)
+					Application[arguments.configVarName] = ecProperties.stProperties;
+				else
+					Application[arguments.configVarName] = ecProperties.stFlattened;
+
+			}
+		}catch(any e){
+			throw (message:"Error initializing EnvironmentConfig - #e.message#", detail:e.detail, extendedInfo:e.extendedInfo);
+		}
+		return ecProperties;
+	}
+    </cfscript>
+
 		<!--- setters & getters --->
 
 		<!--- setOCSDefinitionMaker(environmentConfig.model.ColdSpringDefinitionMaker) --->

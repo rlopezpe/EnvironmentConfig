@@ -7,9 +7,9 @@
 						www.rolando-lopez.com/tech
 	Past Contributors:  Rob Gonda; Tom DeManincor; Paul Marcotte
 	Date:				2007
-
+License
 	*****************************************************
-	License: 	Copyright 2007 Rolando Lopez (www.rolando-lopez.com) 
+	: 	Copyright 2007 Rolando Lopez (www.rolando-lopez.com) 
 				Licensed under the Apache License, Version 2.0 (the "License"); 
 				you may not use this file except in compliance with the License.
 				You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 
@@ -40,6 +40,7 @@
 		</cftry>
 
 		<cfif not isXML( theFile )>
+			<cfdump var="#theFile#" abort="true" />
 			<cfthrow type="ec.notXml" message="#arguments.xmlFile# is not in valid XML format" />
 		</cfif>
 		<cftry>
