@@ -88,4 +88,13 @@ See the License for the specific language governing permissions and limitations 
 				return variables.ECService.getEnvironmentRawXML(xmlFilePath);
     	</cfscript>
     </cffunction>
+
+    <cfscript>
+        public struct function configFileToStruct(String filePath){
+            if(!fileExists(expandPath(arguments.filePath)))
+                throw('The file with path ' & arguments.filePath & "doesn't exist or could not be read due to permissions.");
+
+            return variables.ECService.getEnvironmentProperties( arguments.filePath );
+        }
+    </cfscript>
 </cfcomponent>

@@ -7,9 +7,9 @@
 						www.rolando-lopez.com/tech
 	Past Contributors:  Rob Gonda; Tom DeManincor; Paul Marcotte
 	Date:				2007
-License
+
 	*****************************************************
-	: 	Copyright 2007 Rolando Lopez (www.rolando-lopez.com) 
+	License: 	Copyright 2007 Rolando Lopez (www.rolando-lopez.com) 
 				Licensed under the Apache License, Version 2.0 (the "License"); 
 				you may not use this file except in compliance with the License.
 				You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 
@@ -19,7 +19,6 @@ License
 	--->
 
 <cfcomponent name="environment" displayName="environment" hint = "Main Component for Environment Configurator." extends="Object" >
-
 		<!---
 		*************************************************************************
 		Init
@@ -40,7 +39,6 @@ License
 		</cftry>
 
 		<cfif not isXML( theFile )>
-			<cfdump var="#theFile#" abort="true" />
 			<cfthrow type="ec.notXml" message="#arguments.xmlFile# is not in valid XML format" />
 		</cfif>
 		<cftry>
@@ -67,7 +65,7 @@ License
 		<cfargument name = "environmentID" type = "string" required = "true" hint="Environment ID as defined in the EnvironmentConfig XML config file."  />
 
 		<cfscript>
-			trace(text:"Loading properties from environment with ID: '#arguments.environmentID#'...");
+			writeDump(var:"Loading properties from environment with ID: '#arguments.environmentID#'...", output:"console");
 			var properties = structnew();
 			var defaultEnvironment = '';
 			var defaultPropertiesArray = arrayNew(1);
@@ -91,7 +89,8 @@ License
 		<cftry>
 		<cfscript>
 			defaultPropertiesArray = defaultEnvironment[1].XmlChildren[1].XmlChildren;
-			targetPropertiesArray = targetEnvironment[1].XmlChildren[2].XmlChildren;
+			targetPropertiesArray = targetEnvironment[1].XmlChildren[arrayLen(targetEnvironment[1].XmlChildren)].XmlChildren;
+			
 			structAppend(properties,getArrayProperties(defaultPropertiesArray),false);
 			targetStruct = getArrayProperties(targetPropertiesArray);
 			for( ixKey in targetStruct ){
@@ -110,14 +109,14 @@ License
 			properties = parseStructForCFMOutput(duplicate(properties));
 			properties["environmentID"] = arguments.environmentID;
 			//structAppend(properties,getArrayProperties(targetPropertiesArray),true);
-			trace(text:"Properties loaded for: '#arguments.environmentID#' environment.");
+			writeDump(var:"Properties loaded for: '#arguments.environmentID#' environment.", output:"console");
 		</cfscript>
 
 		<cfcatch type = "any" >
 			<cfscript>
 				if(listFirst(cfcatch.type,".") == 'ec')
 						rethrow;
-				ethrow(  'Failed to: get environment by id ','ec.getEnvironmentById' );
+				throw(  message:'Failed to: get environment by id ',detail:cfcatch.detail );
 			</cfscript>
 		</cfcatch>
 		</cftry>
@@ -133,6 +132,7 @@ License
 
 	<cffunction name = "getEnvironmentByUrl" access = "package" output = "false" returntype = "struct" hint="Returns a structure of properties based on the environment URL pattern.">
 		<cfargument name = "serverName" type = "string" required = "true" hint="Environment URL Pattern as defined in the EnvironmentConfig XML config file." />
+		<cfargument name = "serverIp" type = "string" required = "false" hint="The server's IP address. If passed the method will try match the environment by IP based on ip_patterns tag in the Environment xml file" />
 		<cfscript>
 			var propertiesArray	= arrayNew(1);
 			var i = 0;
@@ -141,18 +141,24 @@ License
 			var environmentUrl = '';
 				//end of vars
 
-			trace(text:"Starting getEnvironmentByURL...");
+			writeDump(var:"Starting getEnvironmentByURL...", output:"console");
 			propertiesArray = xmlSearch( getXmlFile(), '/environments/environment' );
 
 		</cfscript>
 
 		<cfscript>
-		//trace(text:"Checkpoint 1 getEnvironmentByURL...");
+		//writeDump(var:"Checkpoint 1 getEnvironmentByURL...", output:"console");
 			if( isArray( propertiesArray )){
 				for(i=1; i lte arrayLen( propertiesArray ); i=i+1){
 					if( isArray( propertiesArray[i].xmlChildren )){
 						for(j=1; j lte arrayLen(propertiesArray[i].xmlChildren); j=j+1 ){
-							if( propertiesArray[i].xmlChildren[j].xmlName eq 'patterns'){
+							if( structKeyExists(arguments,"serverIp") && propertiesArray[i].xmlChildren[j].xmlName eq 'ippatterns'){
+								for( k=1; k lte arrayLen( propertiesArray[i].xmlChildren[j].xmlChildren); k=k+1){
+									environmentIp = propertiesArray[i].xmlChildren[j].xmlChildren[k].xmlText;
+									if( refindnocase( environmentIp, arguments.serverIp ))
+										return getEnvironmentById( propertiesArray[i].xmlAttributes.id );
+								}
+							}else if( propertiesArray[i].xmlChildren[j].xmlName eq 'patterns' ){
 								for( k=1; k lte arrayLen( propertiesArray[i].xmlChildren[j].xmlChildren); k=k+1){
 									environmentUrl = propertiesArray[i].xmlChildren[j].xmlChildren[k].xmlText;
 									if( refindnocase( environmentUrl, arguments.serverName ))
@@ -324,22 +330,20 @@ License
 		<cfargument name="subStruct" type="struct" required="false" />	
 		<cfscript>
 			var stl 	= structNew();
-			stl.regex 	= "\$\{{1}([_a-zA-Z0-9]+)\}{1}";
+			stl.regex 	= "(\$\{{1}([_a-zA-Z0-9]+)\}{1})";
 			stl.regexReturn = structNew();
 			stl.stTemp  = structNew();
-			//trace(text:"Starting populateVars...");
+			writeDump(var:"Starting populateVars...", output:"console");
 		</cfscript>
 
 		<cftry>
 			<cfscript>
-				for (ixKey in arguments.inputStruct){
+				for (var ixKey in arguments.inputStruct){
 					if(not isStruct( arguments.inputStruct[ixKey] )){
-						//trace(text:"replacing " & ixKey);
 							replaceVariables(stl.regex,arguments.inputStruct,ixKey);
 					}else{
 						stl.stTemp = arguments.inputStruct[ixKey];
-						for (ixKey2 in stl.stTemp){
-						//trace(text:"replacing " & ixKey);
+						for (var ixKey2 in stl.stTemp){
 							replaceVariables(stl.regex,arguments.inputStruct,ixKey2);
 							
 						}
@@ -375,45 +379,55 @@ License
 			var ix	= 2;
 
     		try{
-				stl.foundKey	= structFindKey(inputStruct, arguments.structKey);
+				stl.foundKey	= structFindKey(inputStruct, arguments.structKey,"all");
 				stl.counter=0;
-				stl.regexReturn = refind(arguments.regexTest,stl.foundKey[1].value,1,true);
-				
-				while(stl.regexReturn["len"][1] >0){
-					stl.varName = mid(stl.foundKey[1].owner[listLast(stl.foundKey[1].path,'.')],stl.regexReturn["pos"][ix],stl.regexReturn["len"][ix]);
-					stl.aVarValue = structFindKey(arguments.inputStruct,stl.varName);
-					if(arrayLen(stl.aVarValue)){
-						replaceVariables(arguments.regexTest,arguments.inputStruct,stl.varName);
-						if(listLen(stl.foundKey[1].path,'.') gt 1){
-							stl.ownerStruct = evaluate("arguments.inputStruct#listDeleteAt(stl.foundKey[1].path,listLen(stl.foundKey[1].path,'.'),'.')#");
-							stl.ownerStruct[listLast(stl.foundKey[1].path,'.')] = replaceNoCase(stl.foundKey[1].value,"${"&stl.varName&"}",stl.aVarValue[1].value,"ALL");
-//							stl.ownerStruct[listLast(stl.foundKey[1].path,'.')] = parseCFMOutput(toString( replaceNoCase(stl.foundKey[1].value,"${"&stl.varName&"}",stl.aVarValue[1].value,"ALL")));
-							stl["structReplaced"] = stl.ownerStruct[listLast(stl.foundKey[1].path,'.')];
-						}else{
-							arguments.inputStruct[right(stl.foundKey[1].path,len(stl.foundKey[1].path)-1)] = replaceNoCase(stl.foundKey[1].value,"${"&stl.varName&"}",stl.aVarValue[1].value,"ALL");
-							stl["structReplaced"] = arguments.inputStruct[right(stl.foundKey[1].path,len(stl.foundKey[1].path)-1)];
-						}							
-						
-						stl.foundKey	= structFindKey(inputStruct, listLast(stl.foundKey[1].path,'.'));
-						stl.regexReturn = refind(arguments.regexTest,stl.foundKey[1].value,1,true);
-						stl.counter++;
+				stl.regexReturn = [];
+				for(var ixKey=1; ixKey <= arrayLen(stl.foundKey); ixKey++ ){
+					arrayAppend(stl.regexReturn, rematchNocase(arguments.regexTest,stl.foundKey[ixKey].value));
+					
+					// while(stl.regexReturn[ixKey]["len"][1] >0){
+					if(listLen(stl.foundKey[ixKey].path,'.') gt 1){
+						stl.ownerStruct = evaluate("arguments.inputStruct#listDeleteAt(stl.foundKey[ixKey].path,listLen(stl.foundKey[ixKey].path,'.'),'.')#");
+						stl["structReplaced"] = stl.ownerStruct[listLast(stl.foundKey[ixKey].path,'.')];
+					}else{
+						stl.ownerStruct = arguments.inputStruct;
+						stl["structReplaced"] = arguments.inputStruct[right(stl.foundKey[ixKey].path,len(stl.foundKey[ixKey].path)-1)];
 					}
-					else{
-						//dump("ERROR: Variable '" & arguments.structKey & "' does not exist.",TRUE);
-						ethrow("ERROR: A EC property Variable in '" & arguments.inputStruct[arguments.structKey] & "' does not exist. Verify that this property is defined in the environment XML file.","ec.variableNotExist");
-					}
-						
+
+					for(var ixMatch in stl.regexReturn[ixKey]){
+
+							stl.varName = mid(ixMatch, 3, (len(trim(ixMatch))-2)-1);
+								// writeDump(var:"replacing " & ixMatch & " as " & stl.varName, output:"console");
+							stl.aVarValue = structFindKey(arguments.inputStruct,stl.varName,"all");
+
+							if(arrayLen(stl.aVarValue)){
+							// writeDump(var:"Value found as : " & stl.aVarValue[1].value, output:"console");
+
+								replaceVariables(arguments.regexTest,arguments.inputStruct,stl.varName);
+								if(listLen(stl.foundKey[ixKey].path,'.') gt 1){
+									stl["structReplaced"] = replaceNoCase(stl["structReplaced"],"${"&stl.varName&"}",stl.aVarValue[1].value,"ALL");
+									stl["structReplaced"] = parseCFMOutput(toString(stl.structReplaced));
+								}else{
+									stl["structReplaced"] = replaceNoCase(stl["structReplaced"],"${"&stl.varName&"}",stl.aVarValue[1].value,"ALL");
+								}	
+								stl.ownerStruct[ARGUMENTS.structKey]	= stl.structReplaced;						
+								// writeDump("replaced: " & stl["structReplaced"] & "<br />");
+							}
+							else{
+								ethrow("ERROR: #stl.varName# property Variable in '" & arguments.inputStruct[arguments.structKey] & "' does not exist. Verify that this property is defined in the environment XML file.","ec.variableNotExist");
+							}
+					}	
+					// } // while end
 				}
-				//stl.structReplaced = parseCFMOutput(toString(stl.structReplaced));
     		}
 			catch(ec.variableNotExist e){
 				rethrow;
 			}
 			catch(any e){
-				dump(arguments);
-				dump(stl);
-    			dump( e, false);
-    			ethrow(  'Failed to: Replaces EC variables ${x} with the appropriate value. If a variable is not found an error is thrown ','ec.replaceVariables' );
+				/* dump(local);
+				abort; */
+    			// dump( e, true);
+    			ethrow(  'Failed to: Replace EC variables ${x} with the appropriate value. If a variable is not found an error is thrown ','ec.replaceVariables' );
     		}	
     	</cfscript>
     </cffunction>

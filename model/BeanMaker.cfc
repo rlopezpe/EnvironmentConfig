@@ -77,6 +77,17 @@ See the License for the specific language governing permissions and limitations 
 	<%cffunction name="getMemento" access="public" returntype="struct" hint="I get Memento" output="false"%>
 		<%cfreturn variables.inst /%>
 	<%/cffunction%>
+
+		<%!--- hasProperty() ---%>
+	<%cffunction name="hasProperty" access="public" returntype="boolean" hint="Returns true if the bean has the specified property, false otherwise" output="false"%>
+		<%cfargument name="propertyName" type="String" required="true" /%>
+		<%cfscript%>
+			if(structKeyExists(variables.inst, arguments.propertyName))
+				return true;
+			else
+				return false;
+		<%/cfscript%>	
+	<%/cffunction%>
 <%/cfcomponent%></cfoutput>
 				</cfsavecontent>
 				<cfscript>
@@ -117,7 +128,7 @@ See the License for the specific language governing permissions and limitations 
 				<cfif !directoryExists(dirPath)>
 					<cfthrow type="ec.DirectoryNotFound" message="The ColdFusion class path provided:<br />#dirPath# <br />to the BeanMaker does not exist. CFC could not be created. Ensure the path provided exists before executing the method." />
 				</cfif>
-				<cftrace text="Writing Bean file to: #filePath#" />
+				<cfdump var="Writing Bean file to: #filePath#" output="console" />
 				<cffile action="write" file="#filePath#" output="#arguments.beanString#" />
 				
 				<cfcatch type="ec.DirectoryNotFound">
