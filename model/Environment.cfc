@@ -387,7 +387,8 @@
 					
 					// while(stl.regexReturn[ixKey]["len"][1] >0){
 					if(listLen(stl.foundKey[ixKey].path,'.') gt 1){
-						stl.ownerStruct = evaluate("arguments.inputStruct#listDeleteAt(stl.foundKey[ixKey].path,listLen(stl.foundKey[ixKey].path,'.'),'.')#");
+						// stl.ownerStruct = evaluate("arguments.inputStruct#listDeleteAt(stl.foundKey[ixKey].path,listLen(stl.foundKey[ixKey].path,'.'),'.')#");
+						stl.ownerStruct = evaluate("arguments.inputStruct[removeChars(listDeleteAt(stl.foundKey[ixKey].path,listLen(stl.foundKey[ixKey].path,'.'),'.'),1,1)]");
 						stl["structReplaced"] = stl.ownerStruct[listLast(stl.foundKey[ixKey].path,'.')];
 					}else{
 						stl.ownerStruct = arguments.inputStruct;
@@ -427,7 +428,8 @@
 				/* dump(local);
 				abort; */
     			// dump( e, true);
-    			ethrow(  'Failed to: Replace EC variables ${x} with the appropriate value. If a variable is not found an error is thrown ','ec.replaceVariables' );
+    			rethrow;
+    			// ethrow(  'Failed to: Replace EC variables ${x} with the appropriate value. If a variable is not found an error is thrown ','ec.replaceVariables' );
     		}	
     	</cfscript>
     </cffunction>
